@@ -1,0 +1,16 @@
+stages:
+  data_collection:
+    cmd: python -m src.data.data_collection
+    deps:
+    - src/data/data_collection.py
+    params:
+    - data_collection.test_size
+    outs:
+    - data/raw
+  data_process:
+    cmd: python -m src.data.data_processing
+    deps:
+    - data/raw
+    - src/data/data_processing.py
+    outs:
+    - data/processed
