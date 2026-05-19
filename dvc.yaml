@@ -33,3 +33,8 @@ stages:
     - reports/run_info.json
     metrics:
     - reports/metrics.json
+  model_registration:
+    cmd: python src/model/model_registry.py staging
+    deps:
+    - reports/metrics.json
+    - src/model/model_registry.py
