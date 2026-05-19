@@ -1,46 +1,53 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import pandas as pd
 import joblib
 import numpy as np
+import os
 
-# print the column data type
-url = "https://raw.githubusercontent.com/plotly/datasets/refs/heads/master/diabetes.csv"
-df = pd.read_csv(url)
-column_type = print(df.dtypes)
-
-# Create an Instance/Method of Fast API
 app = FastAPI()
-model = joblib.load("models/diabetes_model.pkl")
 
-# Create class Feature and type
-class diabetesinput(BaseModel):
-        Pregnancies             :      int
-        Glucose                 :      int
-        BloodPressure           :      int
-        SkinThickness           :      int
-        Insulin                 :      int
-        BMI                     :    float
-        DiabetesPedigreeFunction:    float
-        Age                     :      int
-# Using decorator '@' to functions or methods
-@app.get('/')
+MODEL_PATH = os.getenv("MODEL_PATH", "models/diabetes_model.pkl")
+model = None
+
+@app.on_event("startup")
+def load_model():
+    global model
+    model = joblib.load(MODEL_PATH)
+
+class DiabetesInput(BaseModel):
+    Pregnancies: int
+    Glucose: int
+    BloodPressure: int
+    SkinThickness: int
+    Insulin: int
+    BMI: float
+    DiabetesPedigreeFunction: float
+    Age: int
+
+@app.get("/")
 def index():
-    return "Welcome to diatebets Prediction"
+    return {"message": "Diabetes Prediction API"}
 
-@app.post('/predict')
-def model_predict(data: diabetesinput ):
-      input_data=np.array(
-            [[
-                data.Pregnancies,             
-                data.Glucose    ,             
-                data.BloodPressure ,          
-                data.SkinThickness ,          
-                data.Insulin     ,            
-                data.BMI         ,            
-                data.DiabetesPedigreeFunction,
-                data.Age                        
-            ]]
-      )
-      prediction = model.predict(input_data)[0]
-      return {"diabetic": bool(prediction)}
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.post("/predict")
+def predict(data: DiabetesInput):
+    try:
+        input_data = np.array([[
+            data.Pregnancies,
+            data.Glucose,
+            data.BloodPressure,
+            data.SkinThickness,
+            data.Insulin,
+            data.BMI,
+            data.DiabetesPedigreeFunction,
+            data.Age
+        ]])
+
+        prediction = model.predict(input_data)[0]
+        return {"diabetic": bool(prediction)}
+
+    except Exception as e:
+        return {"error": str(e)}

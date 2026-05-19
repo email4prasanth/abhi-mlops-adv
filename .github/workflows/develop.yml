@@ -44,6 +44,12 @@ jobs:
       run: |
         dvc repro
 
+    - name: Run unit test
+      env:
+        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      run: |
+        python -m unittest tests/model_test.py
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
