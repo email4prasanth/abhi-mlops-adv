@@ -26,19 +26,11 @@ mlflow.set_experiment("Base_model")
 
 # Load run ID and model name from json
 reports_path = "reports/run_info.json"
-if os.path.exists(reports_path):
-    with open(reports_path, "r") as file:
-        run_info = json.load(file)
-    run_id = run_info['run_id']
-    model_name = run_info['model_name']
-else:
-    # Fallback: try to get the latest model version from registry
-    print("⚠️  run_info.json not found. Attempting to get model name from registry...")
-    
-    # Try to find models - you might need to specify the model name
-    # Option 1: Hardcode your model name (recommended for production)
-    model_name = "Best Model"  # Replace with your actual model name
-    
+with open(reports_path, "r") as file:
+    run_info = json.load(file)
+
+run_id = run_info['run_id']
+model_name = run_info['model_name']
 
 # Create mlflow client
 client = MlflowClient()
