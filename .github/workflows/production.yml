@@ -1,10 +1,14 @@
 # Deploy Production-approved model
+# Deploy Production-approved model
 name: Promote to Production
 
 on:
-  workflow_dispatch:   # manual approval (BEST PRACTICE)
+  push:
+    branches:
+      - production
 
 env:
+  ENV_NAME: production
   AWS_REGION: us-east-1
   ECR_REGISTRY: 544238486182.dkr.ecr.us-east-1.amazonaws.com
   ECR_REPOSITORY: mlops-app/production
