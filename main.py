@@ -11,7 +11,7 @@ column_type = print(df.dtypes)
 
 # Create an Instance/Method of Fast API
 app = FastAPI()
-model = joblib.load("diabetes_model.pkl")
+model = joblib.load("models/diabetes_model.pkl")
 
 # Create class Feature and type
 class diabetesinput(BaseModel):
