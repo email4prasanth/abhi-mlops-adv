@@ -20,93 +20,93 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+  
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+  
+      # -----------------------------------
+      # STEP 1: Promote model in MLflow
+      # -----------------------------------
+      - name: Promote model to Production
+        env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          python src/model/model_registry.py production
+  
+      # -----------------------------------
+      # AWS Setup
+      # -----------------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+  
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+  
+      - name: Create ECR Repository if not exists
       run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt
-
-    # -----------------------------------
-    # STEP 1: Promote model in MLflow
-    # -----------------------------------
-    - name: Promote model to Production
-      env:
-        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-      run: |
-        python src/model/model_registry.py production
-
-    # -----------------------------------
-    # AWS Setup
-    # -----------------------------------
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-
-    - name: Login to ECR
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Create ECR Repository if not exists
-    run: |
-      aws ecr describe-repositories \
-        --repository-names ${{ env.ECR_REPOSITORY }} \
-        --region ${{ env.AWS_REGION }} \
-      || \
-      aws ecr create-repository \
-        --repository-name ${{ env.ECR_REPOSITORY }} \
-        --region ${{ env.AWS_REGION }}
-
-    # -----------------------------------
-    # Build image (same code, new alias used inside container)
-    # -----------------------------------
-    - name: Build Docker Image
-      run: |
-        docker build -t mlops-app:${{ github.sha }} .
-
-    - name: Tag Image
-      run: |
-        docker tag mlops-app:${{ github.sha }} \
-        ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-
-    - name: Push Image
-      run: |
-        docker push \
-        ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-
-    # -----------------------------------
-    # Deploy to EC2
-    # -----------------------------------
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-
-    - name: Deploy to EC2
-      run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << EOF
-
-        aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-        docker login --username AWS --password-stdin \
-        ${{ env.ECR_REGISTRY }}
-
-        docker pull \
-        ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-
-        docker stop mlops-container || true
-        docker rm mlops-container || true
-
-        docker run -d \
-          --name mlops-container \
-          -p 8080:8080 \
-          -e MODEL_ALIAS=Production \
-          -e DAGSHUB_TOKEN=${{ secrets.DAGSHUB_TOKEN }} \
+        aws ecr describe-repositories \
+          --repository-names ${{ env.ECR_REPOSITORY }} \
+          --region ${{ env.AWS_REGION }} \
+        || \
+        aws ecr create-repository \
+          --repository-name ${{ env.ECR_REPOSITORY }} \
+          --region ${{ env.AWS_REGION }}
+  
+      # -----------------------------------
+      # Build image (same code, new alias used inside container)
+      # -----------------------------------
+      - name: Build Docker Image
+        run: |
+          docker build -t mlops-app:${{ github.sha }} .
+  
+      - name: Tag Image
+        run: |
+          docker tag mlops-app:${{ github.sha }} \
           ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-
-        EOF
+  
+      - name: Push Image
+        run: |
+          docker push \
+          ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+  
+      # -----------------------------------
+      # Deploy to EC2
+      # -----------------------------------
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+  
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << EOF
+  
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+          docker login --username AWS --password-stdin \
+          ${{ env.ECR_REGISTRY }}
+  
+          docker pull \
+          ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+  
+          docker stop mlops-container || true
+          docker rm mlops-container || true
+  
+          docker run -d \
+            --name mlops-container \
+            -p 8080:8080 \
+            -e MODEL_ALIAS=Production \
+            -e DAGSHUB_TOKEN=${{ secrets.DAGSHUB_TOKEN }} \
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+  
+          EOF
