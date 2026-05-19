@@ -27,6 +27,12 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install dvc
+          
+    - name: Run DVC pipeline
+      env:
+        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      run: |
+        dvc repro
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
