@@ -54,6 +54,16 @@ jobs:
     - name: Login to ECR
       uses: aws-actions/amazon-ecr-login@v2
 
+    - name: Create ECR Repository if not exists
+    run: |
+      aws ecr describe-repositories \
+        --repository-names ${{ env.ECR_REPOSITORY }} \
+        --region ${{ env.AWS_REGION }} \
+      || \
+      aws ecr create-repository \
+        --repository-name ${{ env.ECR_REPOSITORY }} \
+        --region ${{ env.AWS_REGION }}
+
     # -----------------------------------
     # Build image (same code, new alias used inside container)
     # -----------------------------------
