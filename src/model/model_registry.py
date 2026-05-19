@@ -6,9 +6,9 @@ import mlflow
 from datetime import datetime
 import sys
 
-import dagshub
-dagshub.init(repo_owner='email4prasanth', repo_name='abhi-mlops-adv', mlflow=True)
-mlflow.set_experiment("Base_model")
+# import dagshub
+# dagshub.init(repo_owner='email4prasanth', repo_name='abhi-mlops-adv', mlflow=True)
+# mlflow.set_experiment("Base_model")
 
 import os
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
