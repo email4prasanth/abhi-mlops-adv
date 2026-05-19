@@ -1,0 +1,51 @@
+name: Archive Production Model
+
+on:
+  push:
+    branches:
+      - archive  # Optional: trigger when pushing to archive branch
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 544238486182.dkr.ecr.us-east-1.amazonaws.com
+
+jobs:
+  archive-model:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Archive Model
+      env:
+        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      run: |
+        if [ -z "${{ github.event.inputs.version }}" ]; then
+          echo "Archiving current production model..."
+          python src/model/model_registry.py archive
+        else
+          echo "Archiving specific version ${{ github.event.inputs.version }}..."
+          python -c "
+          import sys
+          sys.path.append('src/model')
+          from model_registry import move_to_archived
+          move_to_archived(${{ github.event.inputs.version }})
+          "
+        fi
+
+    - name: Verify Archive
+      env:
+        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      run: |
+        python src/model/model_registry.py list
