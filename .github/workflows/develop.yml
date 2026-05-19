@@ -61,24 +61,24 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-    
+
     - name: SSH into server and deploy
       run: |
         ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << EOF
-    
+
         aws ecr get-login-password --region us-east-1 | \
         docker login --username AWS --password-stdin \
         544238486182.dkr.ecr.us-east-1.amazonaws.com
-    
+
         docker pull \
         544238486182.dkr.ecr.us-east-1.amazonaws.com/mlops-app:${{ env.IMAGE_TAG }}
-    
+
         docker stop mlops-container || true
         docker rm mlops-container || true
-    
+
         docker run -d \
           --name mlops-container \
-          -p 8000:8000 \
+          -p 8080:8080 \
           544238486182.dkr.ecr.us-east-1.amazonaws.com/mlops-app:${{ env.IMAGE_TAG }}
-    
+
         EOF
