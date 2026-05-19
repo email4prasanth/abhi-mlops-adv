@@ -1,4 +1,4 @@
-# Deploy Stagging model (Train + Evaluate + Register + Staging)
+# Deploy Stagging model (Train + Evaluate + Register + staging)
 name: Deploy mlops model
 
 on:
@@ -7,17 +7,17 @@ on:
       - CICD
 
 env:
-  ENV_NAME: Staging
+  ENV_NAME: staging
   AWS_REGION: us-east-1
   ECR_REGISTRY: 544238486182.dkr.ecr.us-east-1.amazonaws.com
-  ECR_REPOSITORY: mlops-app/Staging
+  ECR_REPOSITORY: mlops-app/staging
 
 jobs:
   mlflow-deploy:
     runs-on: ubuntu-latest
 
     environment:
-      name: Staging
+      name: staging
 
     steps:
 
@@ -101,7 +101,7 @@ jobs:
 
         docker run -d \
           --name mlops-container \
-          -e MODEL_ALIAS=Staging \
+          -e MODEL_ALIAS=staging \
           -p 8080:8080 \
           ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
