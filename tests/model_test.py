@@ -66,8 +66,8 @@ class TestModelLoading(unittest.TestCase):
         if not os.path.exists(test_data_path):
             self.fail(f"Test data path not found {test_data_path}")
         test_data = pd.read_csv(test_data_path)
-        x_test = test_data.drop(columns=['Potability'], axis=1)
-        y_test = test_data['Potability']
+        x_test = test_data.drop(columns=["Outcome"], axis=1)
+        y_test = test_data["Outcome"]
 
         predicitons = loaded_model.predict(x_test)
 
