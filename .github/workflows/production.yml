@@ -1,5 +1,4 @@
 # Deploy Production-approved model
-# Deploy Production-approved model
 name: Promote to Production
 
 on:
