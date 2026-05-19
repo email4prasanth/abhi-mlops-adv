@@ -24,3 +24,12 @@ stages:
     - model_building.n_estimators
     outs:
     - models/diabetes_model.pkl
+  model_eval:
+    cmd: python src/model/model_evaluation.py
+    deps:
+    - models/diabetes_model.pkl
+    - src/model/model_evaluation.py
+    outs:
+    - reports/run_info.json
+    metrics:
+    - reports/metrics.json

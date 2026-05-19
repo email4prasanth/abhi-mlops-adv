@@ -58,3 +58,23 @@ stages:
       hash: md5
       md5: cc4e6c6ffa6021afbcbc743a839de600
       size: 1869145
+  model_eval:
+    cmd: python src/model/model_evaluation.py
+    deps:
+    - path: models/diabetes_model.pkl
+      hash: md5
+      md5: cc4e6c6ffa6021afbcbc743a839de600
+      size: 1869145
+    - path: src/model/model_evaluation.py
+      hash: md5
+      md5: 5164826dbce1af3d6cc87e246d53392e
+      size: 6290
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: 5176c1936ffebb2032f40c4f8b2995a1
+      size: 137
+    - path: reports/run_info.json
+      hash: md5
+      md5: e8c69dd34e7283aaf83eaef67a2fb7c6
+      size: 123
