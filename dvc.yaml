@@ -14,3 +14,13 @@ stages:
     - src/data/data_processing.py
     outs:
     - data/processed
+  model_build:
+    cmd: python -m src.model.model_building
+    deps:
+    - data/processed
+    - src/data/data_collection.py
+    - src/model/model_building.py
+    params:
+    - model_building.n_estimators
+    outs:
+    - models/diabetes_model.pkl

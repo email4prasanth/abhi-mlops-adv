@@ -34,3 +34,27 @@ stages:
       md5: aed673e7d81941550886c3eb35bc78db.dir
       size: 24157
       nfiles: 2
+  model_build:
+    cmd: python -m src.model.model_building
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: aed673e7d81941550886c3eb35bc78db.dir
+      size: 24157
+      nfiles: 2
+    - path: src/data/data_collection.py
+      hash: md5
+      md5: 2ced9204f29be684e180f0b7493eede8
+      size: 1898
+    - path: src/model/model_building.py
+      hash: md5
+      md5: a75bb8f5faa04aee5693e6a80f718548
+      size: 1720
+    params:
+      params.yaml:
+        model_building.n_estimators: 100
+    outs:
+    - path: models/diabetes_model.pkl
+      hash: md5
+      md5: cc4e6c6ffa6021afbcbc743a839de600
+      size: 1869145
