@@ -1,0 +1,10 @@
+myenv/
+.git/
+.github/
+__pycache__/
+*.pyc
+notebooks/
+data/
+reports/
+.dvc/
+.env

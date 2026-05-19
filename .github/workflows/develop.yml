@@ -1,0 +1,79 @@
+name: Deploy mlops model
+
+on:
+  push:
+    branches:
+      - CICD
+
+jobs:
+  mlflow-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set Up Tag
+      run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    - name: setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependency
+      run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install dvc
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build Docker Image
+      run: |
+        docker build -t mlops-app .
+
+    - name: Tag Docker Image
+      run: |
+        docker tag mlops-app:latest \
+        544238486182.dkr.ecr.us-east-1.amazonaws.com/mlops-app:latest
+
+    - name: Push Docker Image to ECR
+      run: |
+        docker push \
+        544238486182.dkr.ecr.us-east-1.amazonaws.com/mlops-app:latest
+
+    - name: Push Docker Image to ECR
+      run: |
+        docker push \
+        544238486182.dkr.ecr.us-east-1.amazonaws.com/mlops-app:latest
+
+    - name: SSH into server and deploy
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << EOF
+
+        aws ecr get-login-password --region us-east-1 | \
+        docker login --username AWS --password-stdin \
+        544238486182.dkr.ecr.us-east-1.amazonaws.com
+
+        docker pull 544238486182.dkr.ecr.us-east-1.amazonaws.com/mlops-app:latest
+
+        docker stop mlops-container || true
+        docker rm mlops-container || true
+
+        docker run -d \
+          --name mlops-container \
+          -p 8000:8000 \
+          544238486182.dkr.ecr.us-east-1.amazonaws.com/mlops-app:latest
+
+        EOF
